@@ -48,6 +48,6 @@ android {
 repositories { maven { url 'https://jitpack.io' } }
 
 dependencies {
-    implementation 'com.github.ankidroid:Anki-Android:api-v1.1.0'
+    implementation 'com.github.ankidroid:Anki-Android:v2.17.4'
 }
 
