@@ -17,7 +17,11 @@ class Ankidroid {
 
   /// If you hot restart your app, the isolate won't be killed, and vscode
   /// will show another isolate in your call stack. not that big of a deal.
-  /// Btw, if anyone knows how to give the isolate a name please help
+  ///  
+  /// Note: `askForPermission` needs to be called before trying to use any
+  /// functions of this isolate.
+  /// 
+  /// Dev note: Btw, if anyone knows how to give the isolate a name please help
   /// This is an open issue in the flutter_isolate package
   /// https://github.com/rmawatson/flutter_isolate/issues/108
   static Future<Ankidroid> createAnkiIsolate() async {
@@ -33,7 +37,8 @@ class Ankidroid {
   /// Ask for permission to communicate with ankidroid
   /// This opens a dialog that the user needs to agree.
   /// 
-  /// Note: this needs to be called before trying to communicate with ankidroid.
+  /// Note: this needs to be called before trying to use any functions of an
+  /// ankidroid isolate.
   static Future<void> askForPermission() async {
     final perms = RequestPermission.instace;
     if (!await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
