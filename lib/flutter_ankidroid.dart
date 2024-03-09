@@ -18,10 +18,12 @@ class Ankidroid {
   /// If you hot restart your app, the isolate won't be killed, and vscode
   /// will show another isolate in your call stack. not that big of a deal.
   /// Btw, if anyone knows how to give the isolate a name please help
+  /// This is an open issue in the flutter_isolate package
+  /// https://github.com/rmawatson/flutter_isolate/issues/108
   static Future<Ankidroid> createAnkiIsolate() async {
     WidgetsFlutterBinding.ensureInitialized();
     
-    await askForPermission();
+    //await askForPermission();
 
     final rPort = ReceivePort();
     final isolate = await FlutterIsolate.spawn(_isolateFunction, rPort.sendPort);
