@@ -22,8 +22,6 @@ class Ankidroid {
   /// https://github.com/rmawatson/flutter_isolate/issues/108
   static Future<Ankidroid> createAnkiIsolate() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
-    //await askForPermission();
 
     final rPort = ReceivePort();
     final isolate = await FlutterIsolate.spawn(_isolateFunction, rPort.sendPort);
@@ -32,6 +30,10 @@ class Ankidroid {
     return Ankidroid._(isolate, ankiPort);
   }
 
+  /// Ask for permission to communicate with ankidroid
+  /// This opens a dialog that the user needs to agree.
+  /// 
+  /// Note: this needs to be called before trying to communicate with ankidroid.
   static Future<void> askForPermission() async {
     final perms = RequestPermission.instace;
     if (!await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
