@@ -15,6 +15,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
+
+
 /** FlutterAnkidroidPlugin */
 class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
   
@@ -80,11 +82,13 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
       "findDuplicateNotesWithKey" -> {
         val mid = call.argument<Long>("mid")!!
         val key = call.argument<String>("key")!!
-        val dupes = api.findDuplicateNotes(mid, key).map {hashMapOf(
-          "id" to it.id,
-          "fields" to it.fields.toList(),
-          "tags" to it.tags.toList()
-        )}
+        val dupes = api.findDuplicateNotes(mid, key).map {
+          hashMapOf(
+            "id" to it!!.getId(),
+            "fields" to it!!.getFields().toList(),
+            "tags" to it!!.getTags().toList()
+          )
+        }
 
         result.success(dupes)
       }
@@ -95,15 +99,15 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
         val dupes = api.findDuplicateNotes(mid, keys)
 
         val list = mutableListOf<List<Map<String, Any>>>()
-        for (i in 0 until dupes.size()) {
-          val innerList = dupes.valueAt(i)
+        for (i in 0 until dupes!!.size()) {
+          val innerList = dupes!!.valueAt(i)
 
           if (innerList != null) {
 
             list.add(innerList.map {hashMapOf(
-              "id" to it.id,
-              "fields" to it.fields.toList(),
-              "tags" to it.tags.toList()
+              "id" to it!!.getId(),
+              "fields" to it!!.getFields().toList(),
+              "tags" to it!!.getTags().toList()
             )})
 
           } else {
@@ -139,9 +143,9 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
         val note = api.getNote(noteId)
 
         result.success(hashMapOf(
-          "id" to note.id,
-          "fields" to note.fields.toList(),
-          "tags" to note.tags.toList()
+          "id" to note!!.getId(),
+          "fields" to note!!.getFields().toList(),
+          "tags" to note!!.getTags().toList()
         ))
       }
 
@@ -182,7 +186,7 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
       "getFieldList" -> {
         val modelId = call.argument<Long>("modelId")!!
 
-        result.success(api.getFieldList(modelId).toList())
+        result.success(api.getFieldList(modelId)!!.toList())
       }
 
       "modelList" -> result.success(api.modelList)
