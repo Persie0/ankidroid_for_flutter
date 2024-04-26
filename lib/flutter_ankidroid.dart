@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:async/async.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:request_permission/request_permission.dart';
 
 import 'util/future_result.dart';
 export 'util/note_info.dart' show NoteInfo;
@@ -17,11 +16,15 @@ class Ankidroid {
 
   /// If you hot restart your app, the isolate won't be killed, and vscode
   /// will show another isolate in your call stack. not that big of a deal.
-  /// Btw, if anyone knows how to give the isolate a name please help
+  ///  
+  /// Note: `askForPermission` needs to be called before trying to use any
+  /// functions of this isolate.
+  /// 
+  /// Dev note: Btw, if anyone knows how to give the isolate a name please help
+  /// This is an open issue in the flutter_isolate package
+  /// https://github.com/rmawatson/flutter_isolate/issues/108
   static Future<Ankidroid> createAnkiIsolate() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
-    await askForPermission();
 
     final rPort = ReceivePort();
     final isolate = await FlutterIsolate.spawn(_isolateFunction, rPort.sendPort);
@@ -30,11 +33,18 @@ class Ankidroid {
     return Ankidroid._(isolate, ankiPort);
   }
 
-  static Future<void> askForPermission() async {
-    final perms = RequestPermission.instace;
-    if (!await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
-      await perms.requestAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE');
-    }
+  /// Ask for permission to communicate with ankidroid
+  /// This opens a dialog that the user needs to agree.
+  /// 
+  /// Note: this needs to be called before trying to use any functions of an
+  /// ankidroid isolate.
+  static Future<bool> askForPermission() async {
+
+    const m = MethodChannel("flutter_ankidroid");
+    bool ret = await m.invokeMethod("requestPremission");
+    
+    return ret;
+
   }
 
   void killIsolate() => _isolate.kill();
