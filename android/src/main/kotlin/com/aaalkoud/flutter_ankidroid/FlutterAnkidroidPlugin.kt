@@ -1,8 +1,11 @@
 package com.aaalkoud.flutter_ankidroid
 
+import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
@@ -13,26 +16,117 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.plugin.common.PluginRegistry.Registrar
+import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+
+
 
 /** FlutterAnkidroidPlugin */
-class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
-  
+public class FlutterAnkidroidPlugin : FlutterPlugin, MethodCallHandler, RequestPermissionsResultListener, ActivityAware {
+
+  private var act: Activity? = null
+
   private lateinit var channel : MethodChannel
   private lateinit var context: Context
   private lateinit var api : AddContentApi
 
+  private var ankiPermissionCode = 4321
+  private var ankiPermissionName = "com.ichi2.anki.permission.READ_WRITE_DATABASE"
+  private var permissionRequestResult : Result? = null
+
+
+
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_ankidroid")
+
     context = flutterPluginBinding.applicationContext
     api = AddContentApi(context)
+
+    channel = MethodChannel(flutterPluginBinding.flutterEngine.dartExecutor, "flutter_ankidroid")
     channel.setMethodCallHandler(this)
+
+  }
+  override fun onAttachedToActivity(binding : ActivityPluginBinding) {
+    act = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+  override fun onDetachedFromActivityForConfigChanges() {
+    act = null;
+  }
+  override fun onReattachedToActivityForConfigChanges(binding : ActivityPluginBinding) {
+    act = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+  override fun onDetachedFromActivity() {
+    act = null;
+  }
+
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean{
+    
+    var permissionGranted : Boolean = false
+
+    when(requestCode) {
+      ankiPermissionCode -> {
+        if ( null != grantResults ) {
+          permissionGranted = grantResults.isNotEmpty() &&
+            grantResults.get(0) == PackageManager.PERMISSION_GRANTED
+        }
+      }
+    }
+    permissionRequestResult!!.success(permissionGranted)
+    return permissionGranted
+  }
+
+  /*
+  * Checks if the user already gave permission to interact with anki
+  * Returns true if permission is granted, false otherwise
+  */
+  fun checkPermission(): Boolean{
+
+    val permission = ContextCompat.checkSelfPermission(context, ankiPermissionName)
+    val granted = permission == PackageManager.PERMISSION_GRANTED
+
+    return granted
+
+  }
+
+  /*
+  * Shows a native permission request to interact with ankidroid
+  */
+  fun requestPermission(result: Result){
+
+    val granted = checkPermission()
+
+    if(granted){
+      result.success(granted)
+      return
+    }
+    else {
+      ActivityCompat.requestPermissions(act!!, arrayOf(ankiPermissionName), ankiPermissionCode)
+    }
+
   }
 
   override fun onMethodCall(call: MethodCall, result: Result) {
-    val permission = ContextCompat.checkSelfPermission(context, "com.ichi2.anki.permission.READ_WRITE_DATABASE")
-    if (permission != PackageManager.PERMISSION_GRANTED) {
+
+    var granted : Boolean = checkPermission()
+
+    if(call.method == "checkPermission"){
+      result.success(granted);
+      return
+    }
+    else if(call.method == "requestPremission"){
+      permissionRequestResult = result
+      requestPermission(result)
+      return
+    }
+
+    if (!granted) {
       result.error("Permission to use and modify AnkiDroid database not granted!", "Permission to use and modify AnkiDroid database not granted!", null)
+      return
     }
 
     when (call.method) {
@@ -80,11 +174,13 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
       "findDuplicateNotesWithKey" -> {
         val mid = call.argument<Long>("mid")!!
         val key = call.argument<String>("key")!!
-        val dupes = api.findDuplicateNotes(mid, key).map {hashMapOf(
-          "id" to it.id,
-          "fields" to it.fields.toList(),
-          "tags" to it.tags.toList()
-        )}
+        val dupes = api.findDuplicateNotes(mid, key).map {
+          hashMapOf(
+            "id" to it!!.getId(),
+            "fields" to it!!.getFields().toList(),
+            "tags" to it!!.getTags().toList()
+          )
+        }
 
         result.success(dupes)
       }
@@ -95,15 +191,15 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
         val dupes = api.findDuplicateNotes(mid, keys)
 
         val list = mutableListOf<List<Map<String, Any>>>()
-        for (i in 0 until dupes.size()) {
-          val innerList = dupes.valueAt(i)
+        for (i in 0 until dupes!!.size()) {
+          val innerList = dupes!!.valueAt(i)
 
           if (innerList != null) {
 
             list.add(innerList.map {hashMapOf(
-              "id" to it.id,
-              "fields" to it.fields.toList(),
-              "tags" to it.tags.toList()
+              "id" to it!!.getId(),
+              "fields" to it!!.getFields().toList(),
+              "tags" to it!!.getTags().toList()
             )})
 
           } else {
@@ -139,9 +235,9 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
         val note = api.getNote(noteId)
 
         result.success(hashMapOf(
-          "id" to note.id,
-          "fields" to note.fields.toList(),
-          "tags" to note.tags.toList()
+          "id" to note!!.getId(),
+          "fields" to note!!.getFields().toList(),
+          "tags" to note!!.getTags().toList()
         ))
       }
 
@@ -182,7 +278,7 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
       "getFieldList" -> {
         val modelId = call.argument<Long>("modelId")!!
 
-        result.success(api.getFieldList(modelId).toList())
+        result.success(api.getFieldList(modelId)!!.toList())
       }
 
       "modelList" -> result.success(api.modelList)
@@ -224,4 +320,5 @@ class FlutterAnkidroidPlugin: FlutterPlugin, MethodCallHandler {
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
   }
+
 }
