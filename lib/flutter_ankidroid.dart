@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:async/async.dart';
 import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:request_permission/request_permission.dart';
 
 import 'util/future_result.dart';
 export 'util/note_info.dart' show NoteInfo;
@@ -39,11 +38,13 @@ class Ankidroid {
   /// 
   /// Note: this needs to be called before trying to use any functions of an
   /// ankidroid isolate.
-  static Future<void> askForPermission() async {
-    final perms = RequestPermission.instace;
-    if (!await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
-      await perms.requestAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE');
-    }
+  static Future<bool> askForPermission() async {
+
+    const m = MethodChannel("flutter_ankidroid");
+    bool ret = await m.invokeMethod("requestPremission");
+    
+    return ret;
+
   }
 
   void killIsolate() => _isolate.kill();
