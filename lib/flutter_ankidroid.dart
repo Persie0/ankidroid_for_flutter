@@ -3,13 +3,12 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:async/async.dart';
-import 'package:flutter_isolate/flutter_isolate.dart';
 
 import 'util/future_result.dart';
 export 'util/note_info.dart' show NoteInfo;
 
 class Ankidroid {
-  final FlutterIsolate _isolate;
+  final Isolate _isolate;
   final SendPort _ankiPort;
 
   const Ankidroid._(this._isolate, this._ankiPort);
@@ -19,16 +18,17 @@ class Ankidroid {
   ///  
   /// Note: `askForPermission` needs to be called before trying to use any
   /// functions of this isolate.
-  /// 
-  /// Dev note: Btw, if anyone knows how to give the isolate a name please help
-  /// This is an open issue in the flutter_isolate package
-  /// https://github.com/rmawatson/flutter_isolate/issues/108
   static Future<Ankidroid> createAnkiIsolate() async {
+    
     WidgetsFlutterBinding.ensureInitialized();
-
+    
     final rPort = ReceivePort();
-    final isolate = await FlutterIsolate.spawn(_isolateFunction, rPort.sendPort);
+    final isolate = await Isolate.spawn(
+      _isolateFunction,
+      rPort.sendPort,
+      debugName: "AnkiDroid");
     final ankiPort = await rPort.first;
+    ankiPort.send({"rootIsolateToken" : ServicesBinding.rootIsolateToken});
 
     return Ankidroid._(isolate, ankiPort);
   }
@@ -51,6 +51,7 @@ class Ankidroid {
 
   /// should return 'Test Successful!'
   Future<Result<String>> test() async {
+
     final rPort = ReceivePort();
     _ankiPort.send({'functionName': 'test', 'sendPort': rPort.sendPort});
 
@@ -363,23 +364,16 @@ class Ankidroid {
     const methodChannel = MethodChannel('flutter_ankidroid');
 
     await for (Map<String, dynamic> msg in ankiPort) {
-      // this throws 'no activity'
-      // final perms = RequestPermission.instace;
-      // if (!await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
-      //   await perms.requestAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE');
-      // }
+      
+      if(msg.containsKey("rootIsolateToken")){
+        BackgroundIsolateBinaryMessenger.ensureInitialized(msg["rootIsolateToken"]);
+        continue;
+      }
 
       msg['sendPort'].send(
         await futureToResultMap(() async => await methodChannel.invokeMethod(msg['functionName'], msg..remove('functionName')..remove('sendPort')))
       );
 
-      // if (await perms.hasAndroidPermission('com.ichi2.anki.permission.READ_WRITE_DATABASE')) {
-      //   msg['sendPort'].send(
-      //     await futureToResultMap(() async => await methodChannel.invokeMethod(msg['functionName'], msg..remove('functionName')..remove('sendPort')))
-      //   );
-      // } else {
-      //   msg['sendPort'].send({'e': 'Permission to use and modify AnkiDroid database not granted!'});
-      // }
     }
   }
 }
