@@ -36,6 +36,12 @@ class _MyAppState extends State<MyApp> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton(
+                onPressed: () async {
+                  await Ankidroid.askForPermission();
+                },
+                child: const Text("Ask for permission")
+              ),
+              ElevatedButton(
                 onPressed: anki == null ? null : () async {
                   final result = await anki!.deckList();
 
