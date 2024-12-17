@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ankidroid_for_flutter/ankidroid_for_flutter.dart';
 import 'package:ankidroid_for_flutter/ankidroid_for_flutter_platform_interface.dart';
 import 'package:ankidroid_for_flutter/ankidroid_for_flutter_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -20,7 +19,7 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    AnkidroidForFlutter ankidroidForFlutterPlugin = AnkidroidForFlutter();
+    MethodChannelAnkidroidForFlutter ankidroidForFlutterPlugin = MethodChannelAnkidroidForFlutter();
     MockAnkidroidForFlutterPlatform fakePlatform = MockAnkidroidForFlutterPlatform();
     AnkidroidForFlutterPlatform.instance = fakePlatform;
 
