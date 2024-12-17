@@ -40,7 +40,7 @@ class Ankidroid {
   /// ankidroid isolate.
   static Future<bool> askForPermission() async {
 
-    const m = MethodChannel("flutter_ankidroid");
+    const m = MethodChannel("ankidroid_for_flutter");
     bool ret = await m.invokeMethod("requestPremission");
     
     return ret;
@@ -361,7 +361,7 @@ class Ankidroid {
     final ankiPort = ReceivePort();
     sendPort.send(ankiPort.sendPort);
 
-    const methodChannel = MethodChannel('flutter_ankidroid');
+    const methodChannel = MethodChannel('ankidroid_for_flutter');
 
     await for (Map<String, dynamic> msg in ankiPort) {
       

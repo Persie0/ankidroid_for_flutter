@@ -1,6 +1,6 @@
-# flutter_ankidroid_example
+# ankidroid_for_flutter_example
 
-Demonstrates how to use the flutter_ankidroid plugin.
+Demonstrates how to use the ankidroid_for_flutter plugin.
 
 ## Getting Started
 

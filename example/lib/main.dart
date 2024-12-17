@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_ankidroid/flutter_ankidroid.dart';
+import 'package:ankidroid_for_flutter/ankidroid_for_flutter.dart';
 
 void main() {
   runApp(const MyApp());

@@ -1,4 +1,4 @@
-package com.aaalkoud.flutter_ankidroid
+package com.captaindario.ankidroid_for_flutter
 
 import android.app.Activity
 import android.app.Application
@@ -25,8 +25,8 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
 
 
-/** FlutterAnkidroidPlugin */
-public class FlutterAnkidroidPlugin : FlutterPlugin, MethodCallHandler, RequestPermissionsResultListener, ActivityAware {
+/** AnkidroidForFlutterPlugin */
+public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, RequestPermissionsResultListener, ActivityAware {
 
   private var act: Activity? = null
 
@@ -45,7 +45,7 @@ public class FlutterAnkidroidPlugin : FlutterPlugin, MethodCallHandler, RequestP
     context = flutterPluginBinding.applicationContext
     api = AddContentApi(context)
 
-    channel = MethodChannel(flutterPluginBinding.flutterEngine.dartExecutor, "flutter_ankidroid")
+    channel = MethodChannel(flutterPluginBinding.flutterEngine.dartExecutor, "ankidroid_for_flutter")
     channel.setMethodCallHandler(this)
 
   }

@@ -1,4 +1,4 @@
-group 'com.aaalkoud.flutter_ankidroid'
+group 'com.captaindario.ankidroid_for_flutter'
 version '1.0-SNAPSHOT'
 
 buildscript {
