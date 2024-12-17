@@ -18,19 +18,19 @@ In the opening `<manifest...>` tag: add `xmlns:tools="http://schemas.android.com
 
 ## Usage
 
-Create an Ankidroid instance with its own isolate by running this:
+First you need to get the permission to use the AnkidroidAPI
+
+```dart
+await Ankidroid.askForPermission()
+```
+
+Then, create an Ankidroid instance with its own isolate by running this:
 
 ```dart
 final ankiIsolate = await Ankidroid.createAnkiIsolate();
 ```
 
-To actually use the API then you need to ask for permission like this
-
-```dart
-ankiIsolate.askForPermission()
-```
-
-After you got permission you can use the following methods:
+After this the following methods are available:
 
 ```dart
 anki.addNote(modelId, deckId, fields, tags)
