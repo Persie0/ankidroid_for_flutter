@@ -1,6 +1,6 @@
 name: ankidroid_for_flutter
 description: A flutter wrapper over the java AnkiDroid API.
-version: 1.0.1
+version: 1.0.2
 repository: https://github.com/captaindario/ankidroid_for_flutter/
 
 environment:
