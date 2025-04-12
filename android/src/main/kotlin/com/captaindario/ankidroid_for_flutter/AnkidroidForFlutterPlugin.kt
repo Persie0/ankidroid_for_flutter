@@ -23,8 +23,12 @@ import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
 
-
-/** AnkidroidForFlutterPlugin */
+/**
+ * Flutter plugin for interacting with AnkiDroid.
+ * 
+ * This plugin allows Flutter applications to add notes, cards, decks, and models to AnkiDroid,
+ * as well as query existing content.
+ */
 public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, RequestPermissionsResultListener, ActivityAware {
 
   private var act: Activity? = null
@@ -63,7 +67,7 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
     act = null;
   }
 
-override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
     // Only process if it's our permission code and the permission array contains our permission
     if (requestCode == ankiPermissionCode && permissions.contains(ankiPermissionName)) {
         var permissionGranted: Boolean = false
@@ -77,47 +81,43 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
         return true
     }
     return false
-}
+  }
 
-  /*
-  * Checks if the user already gave permission to interact with anki
-  * Returns true if permission is granted, false otherwise
-  */
-  fun checkPermission(): Boolean{
-
+  /**
+   * Checks if the user already gave permission to interact with AnkiDroid.
+   * 
+   * @return true if permission is granted, false otherwise
+   */
+  fun checkPermission(): Boolean {
     val permission = ContextCompat.checkSelfPermission(context, ankiPermissionName)
     val granted = permission == PackageManager.PERMISSION_GRANTED
 
     return granted
-
   }
 
-  /*
-  * Shows a native permission request to interact with ankidroid
-  */
-  fun requestPermission(result: Result){
-
+  /**
+   * Shows a native permission request to interact with AnkiDroid.
+   * 
+   * @param result The Flutter result to send the permission status back to Dart.
+   */
+  fun requestPermission(result: Result) {
     val granted = checkPermission()
 
-    if(granted){
+    if(granted) {
       result.success(granted)
       return
-    }
-    else {
+    } else {
       ActivityCompat.requestPermissions(act!!, arrayOf(ankiPermissionName), ankiPermissionCode)
     }
-
   }
 
   override fun onMethodCall(call: MethodCall, result: Result) {
-
     var granted : Boolean = checkPermission()
 
-    if(call.method == "checkPermission"){
-      result.success(granted);
+    if(call.method == "checkPermission") {
+      result.success(granted)
       return
-    }
-    else if(call.method == "requestPremission"){
+    } else if(call.method == "requestPremission") {
       permissionRequestResult = result
       requestPermission(result)
       return
@@ -129,7 +129,9 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
     }
 
     when (call.method) {
-      "test" -> { result.success("Test Successful!") }
+      "test" -> { 
+        result.success("Test Successful!") 
+      }
 
       "addNote" -> {
         val modelId = call.argument<Long>("modelId")!!
@@ -157,7 +159,7 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
         val tempfile = File(context.filesDir, preferredName)
         tempfile.writeBytes(bytes)
 
-        val uri = FileProvider.getUriForFile(context,context.packageName + ".fileprovider", tempfile)
+        val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", tempfile)
         context.grantUriPermission("com.ichi2.anki", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         val name = api.addMediaFromUri(uri, preferredName, mimeType)
@@ -194,13 +196,11 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
           val innerList = dupes!!.valueAt(i)
 
           if (innerList != null) {
-
-            list.add(innerList.map {hashMapOf(
+            list.add(innerList.map { hashMapOf(
               "id" to it!!.getId(),
               "fields" to it!!.getFields().toList(),
               "tags" to it!!.getTags().toList()
             )})
-
           } else {
             list.add(listOf())
           }
@@ -211,21 +211,18 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
 
       "getNoteCount" -> {
         val mid = call.argument<Long>("mid")!!
-
         result.success(api.getNoteCount(mid))
       }
 
       "updateNoteTags" -> {
         val noteId = call.argument<Long>("noteId")!!
         val tags = call.argument<List<String>>("tags")!!
-
         result.success(api.updateNoteTags(noteId, tags.toSet()))
       }
 
       "updateNoteFields" -> {
         val noteId = call.argument<Long>("noteId")!!
         val fields = call.argument<List<String>>("fields")!!
-
         result.success(api.updateNoteFields(noteId, fields.toTypedArray()))
       }
 
@@ -243,19 +240,16 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
       "previewNewNote" -> {
         val mid = call.argument<Long>("mid")!!
         val flds = call.argument<List<String>>("flds")!!
-
         result.success(api.previewNewNote(mid, flds.toTypedArray()))
       }
 
       "addNewBasicModel" -> {
         val name = call.argument<String>("name")!!
-
         result.success(api.addNewBasicModel(name))
       }
 
       "addNewBasic2Model" -> {
         val name = call.argument<String>("name")!!
-
         result.success(api.addNewBasic2Model(name))
       }
 
@@ -276,7 +270,6 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
 
       "getFieldList" -> {
         val modelId = call.argument<Long>("modelId")!!
-
         result.success(api.getFieldList(modelId)!!.toList())
       }
 
@@ -284,19 +277,16 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
 
       "getModelList" -> {
         val minNumFields = call.argument<Int>("minNumFields")!!
-
         result.success(api.getModelList(minNumFields))
       }
 
       "getModelName" -> {
         val mid = call.argument<Long>("mid")!!
-
         result.success(api.getModelName(mid))
       }
 
       "addNewDeck" -> {
         val deckName = call.argument<String>("deckName")!!
-
         result.success(api.addNewDeck(deckName))
       }
 
@@ -306,7 +296,6 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
 
       "getDeckName" -> {
         val did = call.argument<Long>("did")!!
-
         result.success(api.getDeckName(did))
       }
 
@@ -319,5 +308,4 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<Str
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
   }
-
 }
