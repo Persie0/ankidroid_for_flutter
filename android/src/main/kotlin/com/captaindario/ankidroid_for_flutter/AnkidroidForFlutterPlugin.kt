@@ -63,21 +63,21 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
     act = null;
   }
 
-  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean{
-    
-    var permissionGranted : Boolean = false
-
-    when(requestCode) {
-      ankiPermissionCode -> {
-        if ( null != grantResults ) {
-          permissionGranted = grantResults.isNotEmpty() &&
-            grantResults.get(0) == PackageManager.PERMISSION_GRANTED
+override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
+    // Only process if it's our permission code and the permission array contains our permission
+    if (requestCode == ankiPermissionCode && permissions.contains(ankiPermissionName)) {
+        var permissionGranted: Boolean = false
+        
+        if (grantResults.isNotEmpty()) {
+            permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED
         }
-      }
+        
+        permissionRequestResult?.success(permissionGranted)
+        permissionRequestResult = null
+        return true
     }
-    permissionRequestResult!!.success(permissionGranted)
-    return permissionGranted
-  }
+    return false
+}
 
   /*
   * Checks if the user already gave permission to interact with anki
