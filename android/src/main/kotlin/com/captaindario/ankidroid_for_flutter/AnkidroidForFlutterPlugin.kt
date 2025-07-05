@@ -38,7 +38,13 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
   private lateinit var api : AddContentApi
 
   private var ankiPermissionCode = 4321
+  private var networkPermissionCode = 4322
+  private var locationPermissionCode = 4323
+  
   private var ankiPermissionName = "com.ichi2.anki.permission.READ_WRITE_DATABASE"
+  private var networkPermissionName = "android.permission.ACCESS_NETWORK_STATE"
+  private var locationPermissionName = "android.permission.ACCESS_FINE_LOCATION"
+  
   private var permissionRequestResult : Result? = null
 
 
@@ -68,17 +74,40 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
   }
 
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
-    // Only process if it's our permission code and the permission array contains our permission
-    if (requestCode == ankiPermissionCode && permissions.contains(ankiPermissionName)) {
-        var permissionGranted: Boolean = false
-        
-        if (grantResults.isNotEmpty()) {
+    when (requestCode) {
+      ankiPermissionCode -> {
+        if (permissions.contains(ankiPermissionName)) {
+          var permissionGranted = false
+          if (grantResults.isNotEmpty()) {
             permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+          }
+          permissionRequestResult?.success(permissionGranted)
+          permissionRequestResult = null
+          return true
         }
-        
-        permissionRequestResult?.success(permissionGranted)
-        permissionRequestResult = null
-        return true
+      }
+      networkPermissionCode -> {
+        if (permissions.contains(networkPermissionName)) {
+          var permissionGranted = false
+          if (grantResults.isNotEmpty()) {
+            permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+          }
+          permissionRequestResult?.success(permissionGranted)
+          permissionRequestResult = null
+          return true
+        }
+      }
+      locationPermissionCode -> {
+        if (permissions.contains(locationPermissionName)) {
+          var permissionGranted = false
+          if (grantResults.isNotEmpty()) {
+            permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+          }
+          permissionRequestResult?.success(permissionGranted)
+          permissionRequestResult = null
+          return true
+        }
+      }
     }
     return false
   }
@@ -90,6 +119,30 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
    */
   fun checkPermission(): Boolean {
     val permission = ContextCompat.checkSelfPermission(context, ankiPermissionName)
+    val granted = permission == PackageManager.PERMISSION_GRANTED
+
+    return granted
+  }
+
+  /**
+   * Checks if the user already gave network permission.
+   * 
+   * @return true if permission is granted, false otherwise
+   */
+  fun checkNetworkPermission(): Boolean {
+    val permission = ContextCompat.checkSelfPermission(context, networkPermissionName)
+    val granted = permission == PackageManager.PERMISSION_GRANTED
+
+    return granted
+  }
+
+  /**
+   * Checks if the user already gave location permission.
+   * 
+   * @return true if permission is granted, false otherwise
+   */
+  fun checkLocationPermission(): Boolean {
+    val permission = ContextCompat.checkSelfPermission(context, locationPermissionName)
     val granted = permission == PackageManager.PERMISSION_GRANTED
 
     return granted
@@ -111,17 +164,73 @@ public class AnkidroidForFlutterPlugin : FlutterPlugin, MethodCallHandler, Reque
     }
   }
 
-  override fun onMethodCall(call: MethodCall, result: Result) {
-    var granted : Boolean = checkPermission()
+  /**
+   * Shows a native permission request for network access.
+   * 
+   * @param result The Flutter result to send the permission status back to Dart.
+   */
+  fun requestNetworkPermission(result: Result) {
+    val granted = checkNetworkPermission()
 
-    if(call.method == "checkPermission") {
+    if(granted) {
       result.success(granted)
       return
-    } else if(call.method == "requestPremission") {
-      permissionRequestResult = result
-      requestPermission(result)
-      return
+    } else {
+      ActivityCompat.requestPermissions(act!!, arrayOf(networkPermissionName), networkPermissionCode)
     }
+  }
+
+  /**
+   * Shows a native permission request for location access.
+   * 
+   * @param result The Flutter result to send the permission status back to Dart.
+   */
+  fun requestLocationPermission(result: Result) {
+    val granted = checkLocationPermission()
+
+    if(granted) {
+      result.success(granted)
+      return
+    } else {
+      ActivityCompat.requestPermissions(act!!, arrayOf(locationPermissionName), locationPermissionCode)
+    }
+  }
+
+  override fun onMethodCall(call: MethodCall, result: Result) {
+    when (call.method) {
+      "checkPermission" -> {
+        val granted = checkPermission()
+        result.success(granted)
+        return
+      }
+      "requestPremission" -> {
+        permissionRequestResult = result
+        requestPermission(result)
+        return
+      }
+      "checkNetworkPermission" -> {
+        val granted = checkNetworkPermission()
+        result.success(granted)
+        return
+      }
+      "requestNetworkPermission" -> {
+        permissionRequestResult = result
+        requestNetworkPermission(result)
+        return
+      }
+      "checkLocationPermission" -> {
+        val granted = checkLocationPermission()
+        result.success(granted)
+        return
+      }
+      "requestLocationPermission" -> {
+        permissionRequestResult = result
+        requestLocationPermission(result)
+        return
+      }
+    }
+
+    var granted : Boolean = checkPermission()
 
     if (!granted) {
       result.error("Permission to use and modify AnkiDroid database not granted!", "Permission to use and modify AnkiDroid database not granted!", null)
